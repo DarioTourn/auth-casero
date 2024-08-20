@@ -1,6 +1,7 @@
 #include <security/pam_modules.h>
 #include <security/pam_ext.h>
-#include "/home/dario-tourn/Descargas/libcotp-2.0.1/src/cotp.h"
+#include <cotp.h>
+//#include "/home/dario-tourn/Descargas/libcotp-2.0.1/src/cotp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,11 +42,13 @@ const char* leer_semilla_de_archivo() {
 }
 
 int chequear_totp(const char *semilla, const char *totp_usuario) {
-    char totp[16];
-
     // Generar el TOTP con la semilla y el tiempo actual y comparar con el ingresado por el usuario
-    cotp_generate_totp(semilla, time(NULL) / 30, totp);
-    return strcmp(totp, totp_usuario) == 0;
+    char *totp_generado;
+    cotp_error_t error;
+
+    totp_generado = get_totp(semilla, 6, 30, SHA1, &error);
+
+    return strcmp(totp_generado, totp_usuario) == 0;
 }
 
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
