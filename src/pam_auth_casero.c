@@ -40,9 +40,12 @@ const char* leer_semilla_de_archivo() {
     return semilla;
 }
 
-int cotp_verify(const char *secret, const char *otp, const char *timestamp, int window)
-{
-    return 1;
+int chequear_totp(const char *semilla, const char *totp_usuario) {
+    char totp[16];
+
+    // Generar el TOTP con la semilla y el tiempo actual y comparar con el ingresado por el usuario
+    cotp_generate_totp(semilla, time(NULL) / 30, totp);
+    return strcmp(totp, totp_usuario) == 0;
 }
 
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
@@ -63,7 +66,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 
 
     // Verificar el código TOTP
-   if (cotp_verify(semilla, totp_usuario, NULL, 30))
+   if (chequear_totp(semilla, totp_usuario))
    {
        return PAM_SUCCESS; // TOTP es válido
    }
