@@ -6,15 +6,32 @@
 #include <string.h>
 #include <stdio.h>
 #include <syslog.h>
+#include <pwd.h>
 #define ARCHIVO_SEMILLA ".seed_auth_casero"
 
-const char *leer_semilla_de_archivo() 
+const char *leer_semilla_de_archivo(pam_handle_t *pamh) 
 {
     static char semilla[33]; // Debería ser de 33 para incluir el terminador nulo
     char ruta[512];
+    const char *user;
+    struct passwd *pw;
+
+    // Obtener el nombre de usuario
+    if (pam_get_user(pamh, &user, NULL) != PAM_SUCCESS || user == NULL) {
+        syslog(LOG_ERR, "No se pudo obtener el nombre de usuario");
+        return NULL; // Error al obtener el nombre de usuario
+    }
+
+    // Obtener la estructura passwd del usuario
+    pw = getpwnam(user);
+    if (pw == NULL) {
+        syslog(LOG_ERR, "No se pudo obtener la información del usuario");
+        return NULL; // Error al obtener la información del usuario
+    }
 
     // Se construye la ruta del archivo de autenticación
-    snprintf(ruta, sizeof(ruta), "%s/%s", getenv("HOME"), ARCHIVO_SEMILLA);
+    snprintf(ruta, sizeof(ruta), "%s/%s", pw->pw_dir, ARCHIVO_SEMILLA);
+    syslog(LOG_INFO, "Ruta para buscar la semilla: %s", ruta);
 
     FILE *archivo = fopen(ruta, "r");
 
@@ -56,6 +73,8 @@ int chequear_totp(const char *semilla, const char *totp_usuario)
         syslog(LOG_ERR, "Error al generar el TOTP");
         return 0;
     }
+    syslog(LOG_ERR, "No se pudo leer la semilla de autenticación");
+    closelog();
     
     int resultado = strcmp(totp_generado, totp_usuario) == 0;
     free(totp_generado); // Asegúrate de liberar la memoria
@@ -71,6 +90,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
 
     // Solicitar el código TOTP al usuario
     retorno = pam_prompt(pamh, PAM_PROMPT_ECHO_OFF, &totp_usuario, "Ingrese el código TOTP: ");
+    
+
     if (retorno != PAM_SUCCESS || totp_usuario == NULL) {
         syslog(LOG_ERR, "Error al solicitar el código TOTP al usuario: %d", retorno);
         closelog();
@@ -78,7 +99,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
     }
 
     // Leer la semilla de autenticación del archivo
-    const char *semilla = leer_semilla_de_archivo();
+    const char *semilla = leer_semilla_de_archivo(pamh);
 
     if (semilla == NULL) {
         syslog(LOG_ERR, "No se pudo leer la semilla de autenticación");
