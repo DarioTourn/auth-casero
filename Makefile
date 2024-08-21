@@ -5,7 +5,7 @@ ARCHIVO_SALIDA = /lib/x86_64-linux-gnu/security/$(NOMBRE_MODULO).so
 # Compilador y opciones
 CC = gcc
 CFLAGS = -fPIC -Wall -shared
-LIBS = -lpam -lcotp
+LIBS = -lpam -lcotp -lpam_misc
 
 # Archivos de código fuente
 SRC = src/$(NOMBRE_MODULO).c
