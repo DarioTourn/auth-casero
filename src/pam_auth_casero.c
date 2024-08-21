@@ -1,11 +1,10 @@
 #include <security/pam_modules.h>
 #include <security/pam_ext.h>
+#include <stddef.h>
 #include <cotp.h>
-//#include "/home/dario-tourn/Descargas/libcotp-2.0.1/src/cotp.h"
-
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #define ARCHIVO_SEMILLA ".seed_auth_casero"
 
