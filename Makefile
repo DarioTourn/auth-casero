@@ -31,6 +31,7 @@ $(ARCHIVO_SALIDA_GENERADOR): $(SRC_GENERADOR)
 # Regla para limpiar los archivos temporales
 clean:
 	rm -f $(ARCHIVO_SALIDA)
+	rm -f $(ARCHIVO_SALIDA_GENERADOR)
 	@echo "Archivos limpios."
 
 # Instalación del módulo en el directorio de módulos PAM
