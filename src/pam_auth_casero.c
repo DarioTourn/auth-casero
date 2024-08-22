@@ -82,7 +82,6 @@ int chequear_totp(const char *semilla, const char *totp_usuario)
         return 0;
     }
     syslog(LOG_ERR, "No se pudo leer la semilla de autenticación");
-    closelog();
     
     int resultado = strcmp(totp_generado, totp_usuario) == 0;
     free(totp_generado); // Asegúrate de liberar la memoria
