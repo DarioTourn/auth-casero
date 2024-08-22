@@ -95,6 +95,7 @@ void leer_semilla(){
 }
 
 int main() {
+    openlog("generador-seed", LOG_PID | LOG_CONS, LOG_AUTH);
     int opcion;
     do{
     printf("Elija una opcion: \n");
@@ -112,5 +113,6 @@ int main() {
             break;
     }
     }while(opcion == 3);
+    closelog();
     return 0;
 }
