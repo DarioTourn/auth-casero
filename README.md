@@ -5,6 +5,7 @@ Modificar el archivo "/etc/pam.d/sshd" agregando la siguiente linea:
 "auth	required	pam_auth_casero.so"
 
 justo debajo de las lineas:
+
 # Standard Un*x authentication.
 @include common-auth
 
