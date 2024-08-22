@@ -95,11 +95,12 @@ void leer_semilla(){
 }
 
 int main() {
+    int opcion;
+    do{
     printf("Elija una opcion: \n");
     printf("1. Generar nueva semilla\n");
     printf("2. Leer Semilla Actual\n");
     printf("3. Salir\n");
-    int opcion;
     scanf("%d", &opcion);
     switch(opcion){
         case 1:
@@ -110,5 +111,6 @@ int main() {
         case 3:
             break;
     }
+    }while(opcion == 3);
     return 0;
 }
