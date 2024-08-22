@@ -9,6 +9,7 @@
 #include <pwd.h>
 #define ARCHIVO_SEMILLA ".seed_auth_casero"
 
+
 /* Función para leer la semilla de autenticación de un archivo.
  Retorna la semilla leída o NULL en caso de error.
  La semilla debe tener 32 caracteres. El archivo debe estar en el directorio home del usuario, 
@@ -25,14 +26,15 @@ const char *leer_semilla_de_archivo(pam_handle_t *pamh)
     // Obtener el nombre de usuario
     if (pam_get_user(pamh, &user, NULL) != PAM_SUCCESS || user == NULL) {
         syslog(LOG_ERR, "No se pudo obtener el nombre de usuario");
-        return NULL;
+        return NULL; // Error al obtener el nombre de usuario
+
     }
 
     // Obtener la estructura passwd del usuario
     pw = getpwnam(user);
     if (pw == NULL) {
         syslog(LOG_ERR, "No se pudo obtener la información del usuario");
-        return NULL; 
+        return NULL; // Error al obtener la información del usuario
     }
 
     // Se construye la ruta del archivo de autenticación
@@ -44,14 +46,14 @@ const char *leer_semilla_de_archivo(pam_handle_t *pamh)
     if (archivo == NULL)
     {
         syslog(LOG_ERR, "Error al abrir el archivo de semilla de autenticación");
-        return NULL; 
+        return NULL; // Error al abrir el archivo
     }
 
     if (fgets(semilla, sizeof(semilla), archivo) == NULL)
     {
         fclose(archivo);
         syslog(LOG_ERR, "Error al leer la semilla de autenticación");
-        return NULL; 
+        return NULL; // Error al leer la semilla
     }
 
     fclose(archivo);
@@ -79,10 +81,11 @@ int chequear_totp(const char *semilla, const char *totp_usuario)
         syslog(LOG_ERR, "Error al generar el TOTP");
         return 0;
     }
-        
+    syslog(LOG_ERR, "No se pudo leer la semilla de autenticación");
+    closelog();
+    
     int resultado = strcmp(totp_generado, totp_usuario) == 0;
-
-    free(totp_generado); 
+    free(totp_generado); // Asegúrate de liberar la memoria
 
     return resultado;
 }
