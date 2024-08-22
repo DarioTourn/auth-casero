@@ -9,9 +9,16 @@
 #include <pwd.h>
 #define ARCHIVO_SEMILLA ".seed_auth_casero"
 
+
+/* Función para leer la semilla de autenticación de un archivo.
+ Retorna la semilla leída o NULL en caso de error.
+ La semilla debe tener 32 caracteres. El archivo debe estar en el directorio home del usuario, 
+ y llamarse '.seed_auth_casero'.
+ El archivo debe contener la semilla en la primera línea.
+*/
 const char *leer_semilla_de_archivo(pam_handle_t *pamh) 
 {
-    static char semilla[33]; // Debería ser de 33 para incluir el terminador nulo
+    static char semilla[33]; // 32 caracteres + 1 para el terminador nulo
     char ruta[512];
     const char *user;
     struct passwd *pw;
@@ -20,6 +27,7 @@ const char *leer_semilla_de_archivo(pam_handle_t *pamh)
     if (pam_get_user(pamh, &user, NULL) != PAM_SUCCESS || user == NULL) {
         syslog(LOG_ERR, "No se pudo obtener el nombre de usuario");
         return NULL; // Error al obtener el nombre de usuario
+
     }
 
     // Obtener la estructura passwd del usuario
@@ -31,7 +39,7 @@ const char *leer_semilla_de_archivo(pam_handle_t *pamh)
 
     // Se construye la ruta del archivo de autenticación
     snprintf(ruta, sizeof(ruta), "%s/%s", pw->pw_dir, ARCHIVO_SEMILLA);
-    syslog(LOG_INFO, "Ruta para buscar la semilla: %s", ruta);
+    syslog(LOG_INFO, "Ruta para buscar la semilla: %s", ruta); // debug
 
     FILE *archivo = fopen(ruta, "r");
 
@@ -78,6 +86,7 @@ int chequear_totp(const char *semilla, const char *totp_usuario)
     
     int resultado = strcmp(totp_generado, totp_usuario) == 0;
     free(totp_generado); // Asegúrate de liberar la memoria
+
     return resultado;
 }
 
@@ -93,8 +102,9 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
     
 
     if (retorno != PAM_SUCCESS || totp_usuario == NULL) {
-        syslog(LOG_ERR, "Error al solicitar el código TOTP al usuario: %d", retorno);
+        syslog(LOG_ERR, "Error al obtener el código TOTP del usuario: %d", retorno);
         closelog();
+        free(totp_usuario);
         return PAM_AUTH_ERR;
     }
 
@@ -104,6 +114,7 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
     if (semilla == NULL) {
         syslog(LOG_ERR, "No se pudo leer la semilla de autenticación");
         closelog();
+        free(totp_usuario);
         return PAM_AUTH_ERR;
     }
 
@@ -111,10 +122,12 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, cons
     if (chequear_totp(semilla, totp_usuario)) {
         syslog(LOG_INFO, "TOTP válido, acceso permitido");
         closelog();
+        free(totp_usuario);
         return PAM_SUCCESS; // TOTP es válido
     } else {
         syslog(LOG_INFO, "TOTP inválido, acceso denegado");
         closelog();
+        free(totp_usuario);
         return PAM_AUTH_ERR; // TOTP inválido
     }
 }
