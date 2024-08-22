@@ -1,3 +1,5 @@
+MAKEFLAGS += -s
+
 # Nombre del módulo y el archivo .so
 NOMBRE_MODULO = pam_auth_casero
 
@@ -37,5 +39,6 @@ clean:
 # Instalación del módulo en el directorio de módulos PAM
 install: all
 	@echo "Módulo PAM instalado en $(ARCHIVO_SALIDA)."
+	@echo "Generador-seed instalado en $(ARCHIVO_SALIDA_GENERADOR)."
 
 .PHONY: all clean install
