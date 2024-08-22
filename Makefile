@@ -1,9 +1,9 @@
 # Nombre del módulo y el archivo .so
 NOMBRE_MODULO = pam_auth_casero
 
-NOMBRE_GENERADOR = genereador-seed
+NOMBRE_GENERADOR = generador-seed
 ARCHIVO_SALIDA = /lib/x86_64-linux-gnu/security/$(NOMBRE_MODULO).so
-ARCHIVO_SALIDA_GENERADOR = /usr/local/bin/$(NOMBRE_GENERADOR).so
+ARCHIVO_SALIDA_GENERADOR = /usr/local/bin/$(NOMBRE_GENERADOR)
 
 # Compilador y opciones
 CC = gcc
@@ -25,7 +25,7 @@ $(ARCHIVO_SALIDA): $(SRC)
 
 # Regla para compilar generador-seed
 $(ARCHIVO_SALIDA_GENERADOR): $(SRC_GENERADOR)
-	$(CC) -o $(NOMBRE_GENERADOR) generador_seed.c
+	$(CC) -o $(ARCHIVO_SALIDA_GENERADOR) $(SRC_GENERADOR)
 	@echo "Generador-seed compilado con éxito."
   
 # Regla para limpiar los archivos temporales
