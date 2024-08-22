@@ -1,19 +1,30 @@
+# Nombre del módulo y el archivo .so
+NOMBRE_MODULO = pam_auth_casero
+ARCHIVO_SALIDA = /lib/x86_64-linux-gnu/security/$(NOMBRE_MODULO).so
+
+# Compilador y opciones
 CC = gcc
-CFLAGS = -fPIC -Wall -Wextra -Iinclude
-LDFLAGS = -shared
-TARGET = pam_my_module.so
-SRC_DIR = src
-INC_DIR = include
-SRC_FILES = $(SRC_DIR)/auth-casero.c
-OBJ_FILES = $(SRC_FILES:.c=.o)
+CFLAGS = -fPIC -Wall -shared
+LIBS = -lpam -lcotp -lpam_misc
 
-all: $(TARGET)
+# Archivos de código fuente
+SRC = src/$(NOMBRE_MODULO).c
 
-$(TARGET): $(OBJ_FILES)
-	$(CC) $(LDFLAGS) -o $@ $^
+# Objetivos
+all: $(ARCHIVO_SALIDA)
 
-$(OBJ_FILES): $(SRC_FILES) $(INC_DIR)/auth-casero.h
-	$(CC) $(CFLAGS) -c $< -o $@
+# Regla para compilar el módulo PAM
+$(ARCHIVO_SALIDA): $(SRC)
+	$(CC) $(CFLAGS) -o $(ARCHIVO_SALIDA) $(SRC) $(LIBS)
+	@echo "Módulo PAM $(ARCHIVO_SALIDA) compilado con éxito."
 
+# Regla para limpiar los archivos temporales
 clean:
-	rm -f $(OBJ_FILES) $(TARGET)
+	rm -f $(ARCHIVO_SALIDA)
+	@echo "Archivos limpios."
+
+# Instalación del módulo en el directorio de módulos PAM
+install: all
+	@echo "Módulo PAM instalado en $(ARCHIVO_SALIDA)."
+
+.PHONY: all clean install
