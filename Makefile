@@ -1,6 +1,8 @@
 # Nombre del módulo y el archivo .so
 NOMBRE_MODULO = pam_auth_casero
+NOMBRE_GENERADOR = genereador-seed
 ARCHIVO_SALIDA = /lib/x86_64-linux-gnu/security/$(NOMBRE_MODULO).so
+ARCHIVO_SALIDA_GENERADOR = /usr/local/bin/$(NOMBRE_GENERADOR).so
 
 # Compilador y opciones
 CC = gcc
@@ -9,9 +11,10 @@ LIBS = -lpam -lcotp -lpam_misc
 
 # Archivos de código fuente
 SRC = src/$(NOMBRE_MODULO).c
+SRC_GENERADOR = $(NOMBRE_GENERADOR).c
 
 # Objetivos
-all: $(ARCHIVO_SALIDA) generador-seed
+all: $(ARCHIVO_SALIDA) $(ARCHIVO_SALIDA_GENERADOR)
 
 # Regla para compilar el módulo PAM
 $(ARCHIVO_SALIDA): $(SRC)
@@ -19,7 +22,7 @@ $(ARCHIVO_SALIDA): $(SRC)
 	@echo "Módulo PAM $(ARCHIVO_SALIDA) compilado con éxito."
 
 # Regla para compilar generador-seed
-generador-seed: generador_seed.c
-	$(CC) -o generador-seed generador_seed.c
+$(ARCHIVO_SALIDA_GENERADOR): $(SRC_GENERADOR)
+	$(CC) -o $(NOMBRE_GENERADOR) generador_seed.c
 	@echo "Generador-seed compilado con éxito."
 .PHONY: all clean install
