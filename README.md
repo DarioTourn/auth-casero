@@ -9,6 +9,10 @@ justo debajo de las lineas:
 # Standard Un*x authentication.
 @include common-auth
 
+y luego borrar la linea "@include common-auth" para poner en su lugar:
+
+"auth requisite pam_unix.so nullok"
+
 Modificar el archivo "/etc/ssh/sshd_config", en particular asegurarse de que las configuraciones:
 
 -UsePAM
