@@ -3,6 +3,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
+#include <sys/stat.h> // Necesario para chmod
 
 #define ARCHIVO_SEMILLA ".seed_auth_casero"
 
@@ -14,6 +15,7 @@ void generar_seed(char *semilla) {
     semilla[32] = '\0'; // Asegurarse de que la cadena esté terminada en nulo
     return;
 }
+
 void nueva_semilla(){
     char semilla[33]; // Debería ser de 33 para incluir el terminador nulo
     char ruta[512];
@@ -43,8 +45,16 @@ void nueva_semilla(){
             return;
         }
         fwrite(semilla, 1, 32, archivo);
-        printf("Su semilla es: %s\n", semilla);
         fclose(archivo);
+
+        // Cambiar permisos del archivo
+        if (chmod(ruta, S_IRUSR | S_IWUSR) != 0) {
+            syslog(LOG_ERR, "Error al cambiar los permisos del archivo");
+            printf("Error al cambiar los permisos del archivo");
+            return;
+        }
+
+        printf("Su semilla es: %s\n", semilla);
     } else {
         char nueva_ruta[512];
         
@@ -61,6 +71,14 @@ void nueva_semilla(){
         fclose(nuevo_archivo);
         remove(ruta);
         rename(nueva_ruta, ruta);
+
+        // Cambiar permisos del archivo
+        if (chmod(ruta, S_IRUSR | S_IWUSR) != 0) {
+            syslog(LOG_ERR, "Error al cambiar los permisos del archivo");
+            printf("Error al cambiar los permisos del archivo");
+            return;
+        }
+
         printf("Su semilla es: %s\n", semilla);
     }
     return;
@@ -86,6 +104,7 @@ void leer_semilla(){
     if(semilla == NULL){
         syslog(LOG_ERR, "Error al leer la semilla de autenticación");
         printf("Error al leer la semilla de autenticación");
+        fclose(archivo);
         return;
     }
     printf("La semilla es: %s\n", semilla);
@@ -109,10 +128,11 @@ int main() {
             break;
         case 2:
             leer_semilla();
+            break; // Añadir break aquí para evitar caer en el caso 3
         case 3:
             break;
     }
-    }while(opcion == 3);
+    }while(opcion != 3); // Cambiar la condición para salir del bucle correctamente
     closelog();
     return 0;
 }
