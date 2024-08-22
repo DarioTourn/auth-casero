@@ -11,20 +11,15 @@ LIBS = -lpam -lcotp -lpam_misc
 SRC = src/$(NOMBRE_MODULO).c
 
 # Objetivos
-all: $(ARCHIVO_SALIDA)
+all: $(ARCHIVO_SALIDA) generador-seed
 
 # Regla para compilar el módulo PAM
 $(ARCHIVO_SALIDA): $(SRC)
 	$(CC) $(CFLAGS) -o $(ARCHIVO_SALIDA) $(SRC) $(LIBS)
 	@echo "Módulo PAM $(ARCHIVO_SALIDA) compilado con éxito."
 
-# Regla para limpiar los archivos temporales
-clean:
-	rm -f $(ARCHIVO_SALIDA)
-	@echo "Archivos limpios."
-
-# Instalación del módulo en el directorio de módulos PAM
-install: all
-	@echo "Módulo PAM instalado en $(ARCHIVO_SALIDA)."
-
+# Regla para compilar generador-seed
+generador-seed: generador_seed.c
+	$(CC) -o generador-seed generador_seed.c
+	@echo "Generador-seed compilado con éxito."
 .PHONY: all clean install
