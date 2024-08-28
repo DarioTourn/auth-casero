@@ -1,8 +1,9 @@
-Instrucciones para la instalacion del modulo pam de autenticacion ssh en 2 pasos:
+Instrucciones para la instalación del módulo PAM de autenticación SSH en 2 pasos:
 
-Modificar el archivo "/etc/pam.d/sshd" agregando la siguiente linea:
+Modificar el archivo "/etc/pam.d/sshd" agregando la siguiente línea:
 
-"auth	required	pam_auth_casero.so"
+```plaintext
+auth	required	pam_auth_casero.s
 
 justo debajo de las lineas:
 
@@ -11,12 +12,13 @@ justo debajo de las lineas:
 
 y luego borrar la linea "@include common-auth" para poner en su lugar:
 
-"auth required pam_unix.so"
+```
+auth required pam_unix.so
 
 Modificar el archivo "/etc/ssh/sshd_config", en particular asegurarse de que las configuraciones:
 
 -UsePAM
--ChallengeResponseAuthentication
+-KbdInteractiveAuthentication
 
 esten descomentadas y seteadas en "yes", y la configuracion
 
