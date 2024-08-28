@@ -1,0 +1,2 @@
+auth requisite pam_unix.so 
+auth required pam_encriptador_seed_escritura.so

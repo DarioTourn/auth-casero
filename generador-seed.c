@@ -6,6 +6,8 @@
 #include <sys/stat.h> // Necesario para chmod	
 #include <security/pam_appl.h>
 #include <security/pam_misc.h>
+#include <unistd.h>
+#include <pwd.h>
 
 #define ARCHIVO_SEMILLA ".seed_auth_casero"
 
@@ -14,14 +16,7 @@ static struct pam_conv conv = {
     NULL /* We don't need additional data now*/
 };
 
-void generar_seed(char *semilla) {
-    const char *base32_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-    for (int i = 0; i < 32; ++i) {
-        semilla[i] = base32_chars[rand() % 32];
-    }
-    semilla[32] = '\0'; // Asegurarse de que la cadena esté terminada en nulo
-}
-
+/*
 void nueva_semilla() {
     char semilla[33]; // Debería ser de 33 para incluir el terminador nulo
     char ruta[512];
@@ -96,6 +91,7 @@ void nueva_semilla() {
         printf("Su semilla es: %s\n", semilla);
     }
 }
+*/
 
 void leer_semilla() {
     char semilla[33];
@@ -126,75 +122,76 @@ void leer_semilla() {
 
 int main() {
     pam_handle_t *pamh = NULL;
-    const char *service_name = "generador-seed-pam";
-    int val_retorno;
-
+    int retval;
+    const char *user;
+    struct passwd *pw;
+    struct pam_conv conv = {
+        misc_conv,
+        NULL
+    };
     openlog("generador-seed", LOG_PID | LOG_CONS, LOG_AUTH);
-    syslog(LOG_INFO, "Iniciando autenticación PAM");
 
-    val_retorno = pam_start(service_name, NULL, &conv, &pamh);
-    if (val_retorno != PAM_SUCCESS) {
-        syslog(LOG_ERR, "Error al iniciar la autenticación: %s", pam_strerror(pamh, val_retorno));
-        printf("Error al iniciar la autenticación: %s\n", pam_strerror(pamh, val_retorno));
+    // Obtener el nombre del usuario actual
+    pw = getpwuid(getuid());
+    if (pw == NULL) {
+        printf("Error al obtener el nombre de usuario\n");
         return 1;
     }
-
-    int res = pam_authenticate(pamh, 0);
-    if (res != PAM_SUCCESS) {
-        syslog(LOG_ERR, "Error en la autenticación: %s", pam_strerror(pamh, res));
-        printf("Error en la autenticación: %s\n", pam_strerror(pamh, res));
-        pam_end(pamh, res);
-        return 0;
-    }
-
-    const char *password;
-    int ret;
-
-    // Obtener la contraseña ingresada por el usuario
-    ret = pam_get_item(pamh, PAM_AUTHTOK, (const void **)&password);
-    if (ret != PAM_SUCCESS) {
-        syslog(LOG_ERR, "Error al obtener la contraseña: %s", pam_strerror(pamh, ret));
-        printf("Error al obtener la contraseña: %s\n", pam_strerror(pamh, ret));
-        pam_end(pamh, ret);
-        return ret;
-    }
-
-    if (password == NULL) {
-        syslog(LOG_ERR, "No se ingresó ninguna contraseña.");
-        printf("No se ingresó ninguna contraseña.\n");
-        pam_end(pamh, PAM_AUTH_ERR);
-        return PAM_AUTH_ERR;
-    }
-
-    printf("Contraseña ingresada: %s\n", password);
+    user = pw->pw_name;
 
     int opcion;
     do {
+        printf("\n");
+        printf("\n");
         printf("Elija una opción: \n");
         printf("1. Generar nueva semilla\n");
         printf("2. Leer Semilla Actual\n");
         printf("3. Salir\n");
-        if (scanf("%d", &opcion) != 1) {
-            printf("Entrada inválida\n");
-            while (getchar() != '\n'); // Limpiar el buffer de entrada
-            continue;
-        }
+        scanf("%d", &opcion);
         switch (opcion) {
             case 1:
-                nueva_semilla();
+                retval = pam_start("generador-seed-pam-escritura", user, &conv, &pamh);
+                if (retval != PAM_SUCCESS) {
+                    syslog(LOG_ERR, "Error al iniciar PAM: %s", pam_strerror(pamh, retval));
+                    printf("Error al iniciar PAM: %s\n", pam_strerror(pamh, retval));
+                    closelog();
+                    return 1;
+                }
+                retval = pam_authenticate(pamh, 0);
+                if (retval != PAM_SUCCESS) {
+                    syslog(LOG_ERR, "Error en la autenticación: %s", pam_strerror(pamh, retval));
+                    printf("Error en la autenticación: %s\n", pam_strerror(pamh, retval));
+                    pam_end(pamh, retval);
+                    closelog();
+                    return 1;
+                }
+                // Aquí puedes agregar el código para generar una nueva semilla
+                pam_end(pamh, PAM_SUCCESS);
                 break;
             case 2:
-                leer_semilla();
+                retval = pam_start("generador-seed-pam-lectura", user, &conv, &pamh);
+                if (retval != PAM_SUCCESS) {
+                    syslog(LOG_ERR, "Error al iniciar PAM: %s", pam_strerror(pamh, retval));
+                    printf("Error al iniciar PAM: %s\n", pam_strerror(pamh, retval));
+                    closelog();
+                    return 1;
+                }
+                retval = pam_authenticate(pamh, 0);
+                if (retval != PAM_SUCCESS) {
+                    syslog(LOG_ERR, "Error en la autenticación: %s", pam_strerror(pamh, retval));
+                    printf("Error en la autenticación: %s\n", pam_strerror(pamh, retval));
+                    pam_end(pamh, retval);
+                    closelog();
+                    return 1;
+                }
+                pam_end(pamh, PAM_SUCCESS);
                 break;
             case 3:
                 break;
             default:
-                printf("Opción inválida\n");
                 break;
         }
     } while (opcion != 3);
-
-    pam_end(pamh, PAM_SUCCESS);
     closelog();
     return 0;
 }
